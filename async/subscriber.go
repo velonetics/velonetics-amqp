@@ -61,6 +61,10 @@ func New(ctx context.Context, cfg Subscriber, opts Options) error { // skipcq: G
 		return err
 	}
 
+	if consumrCfg.AutoACK {
+		return errors.New("auto_ack is not supported for async AMQP agents; use manual ack to allow nack on pipeline failure")
+	}
+
 	options := consumerOptions{
 		consumerCfg: consumrCfg,
 		Topic:       cfg.Topic,

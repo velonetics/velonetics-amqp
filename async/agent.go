@@ -13,6 +13,10 @@ import (
 const minExecutionTime = 5 * time.Second
 
 func StartAgent(ctx context.Context, opts async.Options) bool {
+	if _, ok := opts.Agent.ExtraConfig[consumerNamespace]; !ok {
+		return false
+	}
+
 	amqpF := func(ctx context.Context, l logging.Logger) error {
 		return New(
 			ctx,
@@ -33,13 +37,6 @@ func StartAgent(ctx context.Context, opts async.Options) bool {
 			},
 		)
 	}
-	shortCtx, localCancel := context.WithTimeout(ctx, time.Second)
-	defer localCancel()
-
-	if err := amqpF(shortCtx, logging.NoOp); err == ErrNoConsumerCfgDefined {
-		return false
-	}
-
 	opts.G.Go(func() error {
 		for i := 0; opts.ShouldContinue(i); i++ {
 			delay := opts.BackoffF(i)
