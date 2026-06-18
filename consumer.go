@@ -147,15 +147,15 @@ func (h *connectionHandler) newConsumer(dns string, cfg *consumerCfg, maxRetries
 	}
 
 	for _, k := range cfg.RoutingKey {
-		err := h.conn.ch.QueueBind(
+		if err := h.conn.ch.QueueBind(
 			q.Name,       // queue name
 			k,            // routing key
 			cfg.Exchange, // exchange
 			false,
 			nil,
-		)
-		if err != nil {
-			h.logger.Error(cfg.LogPrefix, fmt.Sprintf("bindind the queue for %s/%s: %s", dns, cfg.Name, err.Error()))
+		); err != nil {
+			h.conn.Close()
+			return emptyChan, fmt.Errorf("binding the queue for %s/%s key %q: %s", dns, cfg.Name, k, err.Error())
 		}
 	}
 
